@@ -1,0 +1,642 @@
+<!DOCTYPE html>
+<html lang="ms">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Topik 1: Kuantiti dan Unit Asas</title>
+<style>
+:root{
+  --bg:#ffffff; --surface:#f2f4f7; --surface2:#e6e9ef; --text:#111418; --muted:#3d4450;
+  --border:#c9ced8; --accent:#0b57d0; --accent-text:#ffffff; --accent-soft:#e3ecfb;
+  --ok:#0a7a33; --ok-soft:#e2f4e8; --bad:#b3261e; --bad-soft:#fbe6e4;
+}
+html[data-theme="dark"]{
+  --bg:#121417; --surface:#1d2026; --surface2:#272b33; --text:#f3f4f6; --muted:#c3c8d2;
+  --border:#3a3f4a; --accent:#8ab4f8; --accent-text:#0b1a33; --accent-soft:#1f2c44;
+  --ok:#6dd58c; --ok-soft:#163222; --bad:#ff8a80; --bad-soft:#3a1c1a;
+}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth;scroll-padding-top:110px}
+body{margin:0;background:var(--bg);color:var(--text);
+  font-family:system-ui,-apple-system,"Segoe UI",Roboto,Arial,sans-serif;
+  font-size:18px;line-height:1.6;-webkit-text-size-adjust:100%}
+button{font:inherit;color:inherit}
+.wrap{max-width:860px;margin:0 auto;padding:0 16px}
+
+/* Header + progress */
+header{position:sticky;top:0;z-index:10;background:var(--bg);border-bottom:2px solid var(--border)}
+.bar-top{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:10px 0}
+.bar-top .t{font-weight:700;font-size:1.05rem;line-height:1.3}
+.btn{min-height:44px;min-width:44px;padding:8px 16px;border:2px solid var(--border);
+  background:var(--surface);border-radius:10px;cursor:pointer;font-weight:600}
+.btn:hover{border-color:var(--accent)}
+.btn:focus-visible,a:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
+.btn-primary{background:var(--accent);color:var(--accent-text);border-color:var(--accent)}
+.progress{padding:0 0 10px}
+.progress-label{display:flex;justify-content:space-between;font-size:.9rem;color:var(--muted);margin-bottom:4px}
+.track{height:12px;background:var(--surface2);border-radius:6px;overflow:hidden}
+.fill{height:100%;width:0;background:var(--accent);transition:width .3s}
+
+/* Nav */
+nav.chips{display:flex;flex-wrap:wrap;gap:8px;margin:20px 0 8px}
+nav.chips a{display:inline-flex;align-items:center;gap:6px;min-height:44px;padding:8px 14px;
+  border:2px solid var(--border);border-radius:22px;text-decoration:none;color:var(--text);
+  font-weight:600;font-size:.95rem;background:var(--surface)}
+nav.chips a.done{border-color:var(--ok);color:var(--ok)}
+nav.chips a.done::before{content:"✓"}
+
+h1{font-size:1.9rem;line-height:1.25;margin:24px 0 6px}
+.lead{color:var(--muted);margin:0 0 8px}
+section.sec{padding:28px 0 12px;border-top:2px solid var(--border);margin-top:24px}
+h2{font-size:1.55rem;line-height:1.3;margin:0 0 16px;display:flex;align-items:center;gap:12px}
+h2 .num{display:inline-flex;align-items:center;justify-content:center;width:40px;height:40px;
+  border-radius:10px;background:var(--accent);color:var(--accent-text);font-size:1.1rem;flex:none}
+h3{font-size:1.15rem;margin:0}
+h4{font-size:1.1rem;margin:24px 0 10px}
+
+/* Boxes */
+.box{border:2px solid var(--border);border-radius:12px;margin:16px 0;background:var(--bg);overflow:hidden}
+.box-h{display:flex;align-items:center;justify-content:space-between;gap:10px;
+  padding:8px 8px 8px 16px;background:var(--surface);border-bottom:2px solid var(--border)}
+.box-b{padding:14px 16px}
+.box-b p{margin:0 0 10px}.box-b p:last-child{margin-bottom:0}
+.copy{min-height:44px;min-width:88px;padding:6px 14px;border:2px solid var(--accent);
+  background:var(--bg);color:var(--accent);border-radius:10px;cursor:pointer;font-weight:700;font-size:.95rem}
+.copy.ok{background:var(--accent);color:var(--accent-text)}
+.factors{list-style:none;padding:0;margin:0;font-size:1.15rem;font-weight:600}
+.factors li{padding:6px 0;border-bottom:1px solid var(--border)}
+.factors li:last-child{border-bottom:0}
+
+/* Tables */
+.tbl{overflow-x:auto;-webkit-overflow-scrolling:touch}
+table{border-collapse:collapse;width:100%;font-size:1rem}
+th,td{border:1px solid var(--border);padding:10px;text-align:left;vertical-align:top}
+th{background:var(--surface2);font-weight:700}
+.wide{min-width:640px}
+
+/* Ladder */
+.ladder{display:flex;flex-wrap:wrap;align-items:center;gap:6px;margin:12px 0}
+.unit{min-width:64px;padding:10px 12px;text-align:center;font-weight:700;font-size:1.1rem;
+  border:2px solid var(--accent);border-radius:10px;background:var(--accent-soft)}
+.step{display:flex;flex-direction:column;align-items:center;font-size:.85rem;font-weight:700;line-height:1.2;padding:0 2px}
+.step .down{color:var(--ok)}.step .up{color:var(--bad)}
+.step .arr{font-size:1rem;color:var(--muted)}
+.legend{font-size:.95rem;color:var(--muted);margin:4px 0 0}
+.legend b.d{color:var(--ok)}.legend b.u{color:var(--bad)}
+
+/* Examples */
+.ex{border-left:6px solid var(--accent);background:var(--surface);border-radius:0 12px 12px 0;padding:14px 16px;margin:14px 0}
+.tag{display:inline-block;font-size:.8rem;font-weight:700;text-transform:uppercase;letter-spacing:.04em;
+  padding:2px 10px;border-radius:6px;background:var(--accent);color:var(--accent-text);margin-bottom:6px}
+.ex .q{margin:0 0 8px;font-weight:600}
+.steps{font-family:ui-monospace,Menlo,Consolas,monospace;font-size:1.02rem;background:var(--bg);
+  border:1px solid var(--border);border-radius:8px;padding:10px 12px}
+.steps div{padding:2px 0}
+.steps .ans{font-weight:700;color:var(--ok)}
+
+/* Exercises */
+.drill{list-style:none;padding:0;margin:0}
+.drill li{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:10px;
+  padding:10px 0;border-bottom:1px solid var(--border)}
+.drill li:last-child{border-bottom:0}
+.drill .lbl{flex:1 1 220px}
+.reveal{min-height:44px;padding:6px 14px;border:2px solid var(--border);background:var(--surface);
+  border-radius:10px;cursor:pointer;font-weight:600;font-size:.95rem}
+.answer{flex-basis:100%;font-weight:700;color:var(--ok);background:var(--ok-soft);border-radius:8px;padding:8px 12px}
+.answer small{display:block;font-weight:500;color:var(--text);font-family:ui-monospace,Menlo,Consolas,monospace}
+[hidden]{display:none!important}
+
+/* Quiz */
+.qcard{border:2px solid var(--border);border-radius:12px;padding:16px;margin:16px 0}
+.qcard .qn{font-size:.85rem;font-weight:700;color:var(--muted);margin:0 0 4px}
+.qcard .qt{font-weight:700;margin:0 0 12px}
+.opts{display:grid;gap:10px}
+.opt{display:block;width:100%;text-align:left;min-height:48px;padding:10px 14px;border:2px solid var(--border);
+  border-radius:10px;background:var(--surface);cursor:pointer;font-size:1rem;font-weight:500}
+.opt:hover:not(:disabled){border-color:var(--accent)}
+.opt:disabled{cursor:default}
+.opt.right{border-color:var(--ok);background:var(--ok-soft);color:var(--text);font-weight:700}
+.opt.wrong{border-color:var(--bad);background:var(--bad-soft);color:var(--text)}
+.fb{margin-top:12px;padding:12px 14px;border-radius:10px;border:2px solid var(--border);background:var(--surface)}
+.fb b.r{color:var(--ok)}.fb b.w{color:var(--bad)}
+.score{font-size:1.2rem;font-weight:700;padding:16px;border:2px solid var(--accent);border-radius:12px;
+  background:var(--accent-soft);margin:16px 0}
+.actions{display:flex;flex-wrap:wrap;gap:10px;margin:16px 0 40px}
+footer{color:var(--muted);font-size:.9rem;padding:24px 0 48px;border-top:2px solid var(--border)}
+.sentinel{height:1px}
+@media (max-width:520px){
+  body{font-size:17px}
+  h1{font-size:1.6rem} h2{font-size:1.35rem}
+  .bar-top .t{font-size:.95rem}
+}
+@media (min-width:1200px){ body{font-size:20px} }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="wrap">
+    <div class="bar-top">
+      <div class="t">Topik 1: Kuantiti dan Unit Asas</div>
+      <button class="btn" id="themeBtn" aria-label="Tukar tema">☾ Gelap</button>
+    </div>
+    <div class="progress">
+      <div class="progress-label"><span id="progText">0 / 7 selesai</span><span id="progPct">0%</span></div>
+      <div class="track" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0" id="progBar"><div class="fill" id="progFill"></div></div>
+    </div>
+  </div>
+</header>
+
+<main class="wrap">
+  <h1>Topik 1: Kuantiti dan Unit Asas</h1>
+  <p class="lead">Matematik SBM10012 · Kolej Komuniti. Baca setiap bahagian sampai habis, cuba latihan, kemudian jawab kuiz di hujung.</p>
+
+  <nav class="chips" id="nav">
+    <a href="#s1" data-sec="1">1. Kuantiti</a>
+    <a href="#s2" data-sec="2">2. Panjang</a>
+    <a href="#s3" data-sec="3">3. Jisim</a>
+    <a href="#s4" data-sec="4">4. Masa</a>
+    <a href="#s5" data-sec="5">5. Arus</a>
+    <a href="#s6" data-sec="6">6. Masalah</a>
+    <a href="#kuiz" data-sec="7">Kuiz</a>
+  </nav>
+
+  <!-- 1 -->
+  <section class="sec" id="s1">
+    <h2><span class="num">1</span>Apa itu kuantiti</h2>
+
+    <div class="box">
+      <div class="box-h"><h3>Definisi</h3><button class="copy" data-copy="c-def">Salin</button></div>
+      <div class="box-b" id="c-def">
+        <p><b>Kuantiti</b> ialah sesuatu yang boleh diukur atau disukat. Contoh: berat, jarak, masa dan luas.</p>
+        <p>Kuantiti terbahagi kepada 2 jenis: <b>kuantiti asas</b> dan <b>kuantiti terbitan</b>.</p>
+        <p><b>Kuantiti asas</b> ialah kuantiti fizikal yang tidak boleh ditakrifkan dalam kuantiti fizik yang lain. Contoh: panjang, jisim, masa, suhu dan arus elektrik.</p>
+        <p><b>Kuantiti terbitan</b> ialah kuantiti fizikal yang dihasilkan dengan menggabungkan kuantiti asas melalui operasi pendaraban atau pembahagian. Contoh: luas, isipadu, halaju dan ketumpatan.</p>
+      </div>
+    </div>
+
+    <div class="box">
+      <div class="box-h"><h3>Jadual kuantiti asas</h3><button class="copy" data-copy="c-asas">Salin</button></div>
+      <div class="box-b tbl" id="c-asas">
+        <table>
+          <thead><tr><th>Kuantiti asas</th><th>Unit</th><th>Unit asas</th><th>Simbol</th></tr></thead>
+          <tbody>
+            <tr><td>Panjang</td><td>kilometer, meter, sentimeter, milimeter</td><td>meter</td><td>m</td></tr>
+            <tr><td>Jisim</td><td>tan, kilogram, gram, miligram</td><td>kilogram</td><td>kg</td></tr>
+            <tr><td>Masa</td><td>tahun, bulan, minggu, hari, jam, saat</td><td>saat</td><td>s</td></tr>
+            <tr><td>Suhu</td><td>Kelvin, Celsius, Fahrenheit</td><td>kelvin</td><td>K</td></tr>
+            <tr><td>Arus elektrik</td><td>ampere, miliampere</td><td>ampere</td><td>A</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="box">
+      <div class="box-h"><h3>Jadual kuantiti terbitan</h3><button class="copy" data-copy="c-terbitan">Salin</button></div>
+      <div class="box-b tbl" id="c-terbitan">
+        <table class="wide">
+          <thead><tr><th>Nama</th><th>Simbol</th><th>Formula</th><th>Unit</th><th>Nama khas</th></tr></thead>
+          <tbody>
+            <tr><td>Luas</td><td>A</td><td>panjang × lebar</td><td>m × m = m²</td><td>-</td></tr>
+            <tr><td>Isipadu</td><td>V</td><td>panjang × lebar × tinggi</td><td>m × m × m = m³</td><td>-</td></tr>
+            <tr><td>Halaju</td><td>v</td><td>jarak anjakan ÷ masa diambil</td><td>m/s = ms⁻¹</td><td>-</td></tr>
+            <tr><td>Pecutan</td><td>a</td><td>perubahan halaju ÷ masa diambil</td><td>ms⁻¹/s = ms⁻²</td><td>-</td></tr>
+            <tr><td>Momentum</td><td>p</td><td>jisim × halaju</td><td>kg × ms⁻¹ = kgms⁻¹</td><td>-</td></tr>
+            <tr><td>Ketumpatan</td><td>ρ</td><td>jisim ÷ isipadu</td><td>kg/m³ = kgm⁻³</td><td>-</td></tr>
+            <tr><td>Daya</td><td>F</td><td>jisim × pecutan</td><td>kg × ms⁻² = kgms⁻²</td><td>newton, N</td></tr>
+            <tr><td>Tekanan</td><td>P</td><td>daya ÷ luas permukaan</td><td>N/m² = Nm⁻²</td><td>pascal, Pa</td></tr>
+            <tr><td>Frekuensi</td><td>f</td><td>1 ÷ tempoh</td><td>1/s = s⁻¹</td><td>hertz, Hz</td></tr>
+            <tr><td>Kerja</td><td>W</td><td>daya × jarak anjakan</td><td>kgms⁻² × m = kgm²s⁻²</td><td>joule, J</td></tr>
+            <tr><td>Kuasa</td><td>P</td><td>kerja ÷ masa diambil</td><td>J/s = Js⁻¹</td><td>watt, W</td></tr>
+            <tr><td>Cas elektrik</td><td>Q</td><td>arus elektrik × masa</td><td>A × s = As</td><td>coulomb, C</td></tr>
+            <tr><td>Voltan</td><td>V</td><td>tenaga ÷ cas elektrik</td><td>J/C = JC⁻¹</td><td>volt, V</td></tr>
+            <tr><td>Rintangan</td><td>R</td><td>voltan ÷ arus elektrik</td><td>V/A = VA⁻¹</td><td>ohm, Ω</td></tr>
+            <tr><td>Kapasiti elektrik</td><td>C</td><td>cas elektrik ÷ voltan</td><td>C/V = CV⁻¹</td><td>farad, F</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+    <div class="sentinel" data-sec="1"></div>
+  </section>
+
+  <!-- 2 -->
+  <section class="sec" id="s2">
+    <h2><span class="num">2</span>Panjang</h2>
+    <div class="box">
+      <div class="box-h"><h3>Definisi dan faktor penukaran</h3><button class="copy" data-copy="c-pjg">Salin</button></div>
+      <div class="box-b" id="c-pjg">
+        <p><b>Panjang</b> ialah jarak di antara dua titik mengikut suatu garis. Unit: kilometer (km), meter (m), sentimeter (cm) dan milimeter (mm).</p>
+        <ul class="factors">
+          <li>1 km = 1000 m</li>
+          <li>1 m = 100 cm</li>
+          <li>1 cm = 10 mm</li>
+        </ul>
+      </div>
+    </div>
+    <div class="ladder" aria-label="Tangga penukaran panjang">
+      <div class="unit">km</div><div class="step"><span class="down">× 1000</span><span class="arr">⇄</span><span class="up">÷ 1000</span></div>
+      <div class="unit">m</div><div class="step"><span class="down">× 100</span><span class="arr">⇄</span><span class="up">÷ 100</span></div>
+      <div class="unit">cm</div><div class="step"><span class="down">× 10</span><span class="arr">⇄</span><span class="up">÷ 10</span></div>
+      <div class="unit">mm</div>
+    </div>
+    <p class="legend">Ke kanan (unit besar ke kecil): <b class="d">darab</b>. Ke kiri (unit kecil ke besar): <b class="u">bahagi</b>.</p>
+
+    <div class="ex"><span class="tag">Contoh 1</span><p class="q">Tukarkan 4.8 km kepada m.</p>
+      <div class="steps"><div>= 4.8 × 1000</div><div class="ans">= 4800 m</div></div></div>
+    <div class="ex"><span class="tag">Contoh 2</span><p class="q">Tukarkan 2 m 6 cm dalam m.</p>
+      <div class="steps"><div>= 2 + (6 ÷ 100)</div><div>= 2 + 0.06</div><div class="ans">= 2.06 m</div></div></div>
+
+    <h4>Latihan</h4>
+    <ul class="drill">
+      <li><span class="lbl">a) 4.05 km dalam m</span><button class="reveal">Tunjuk jawapan</button><div class="answer" hidden>4050 m</div></li>
+      <li><span class="lbl">b) 6900 cm kepada km</span><button class="reveal">Tunjuk jawapan</button><div class="answer" hidden>0.069 km</div></li>
+      <li><span class="lbl">c) 13 m 90 cm kepada cm</span><button class="reveal">Tunjuk jawapan</button><div class="answer" hidden>1390 cm</div></li>
+      <li><span class="lbl">d) 17 cm 9 mm kepada cm</span><button class="reveal">Tunjuk jawapan</button><div class="answer" hidden>17.9 cm</div></li>
+    </ul>
+    <div class="sentinel" data-sec="2"></div>
+  </section>
+
+  <!-- 3 -->
+  <section class="sec" id="s3">
+    <h2><span class="num">3</span>Jisim</h2>
+    <div class="box">
+      <div class="box-h"><h3>Definisi dan faktor penukaran</h3><button class="copy" data-copy="c-jisim">Salin</button></div>
+      <div class="box-b" id="c-jisim">
+        <p><b>Jisim</b> ialah jumlah jirim dalam sesuatu benda. Unit: tan, kilogram (kg), gram (g) dan miligram (mg).</p>
+        <ul class="factors">
+          <li>1 tan = 1000 kg</li>
+          <li>1 kg = 1000 g</li>
+          <li>1 g = 1000 mg</li>
+        </ul>
+      </div>
+    </div>
+    <div class="ladder" aria-label="Tangga penukaran jisim">
+      <div class="unit">tan</div><div class="step"><span class="down">× 1000</span><span class="arr">⇄</span><span class="up">÷ 1000</span></div>
+      <div class="unit">kg</div><div class="step"><span class="down">× 1000</span><span class="arr">⇄</span><span class="up">÷ 1000</span></div>
+      <div class="unit">g</div><div class="step"><span class="down">× 1000</span><span class="arr">⇄</span><span class="up">÷ 1000</span></div>
+      <div class="unit">mg</div>
+    </div>
+    <p class="legend">Ke kanan: <b class="d">darab</b>. Ke kiri: <b class="u">bahagi</b>.</p>
+
+    <div class="ex"><span class="tag">Contoh 1</span><p class="q">Tukarkan 41.35 kg kepada g.</p>
+      <div class="steps"><div>= 41.35 × 1000</div><div class="ans">= 41350 g</div></div></div>
+    <div class="ex"><span class="tag">Contoh 2</span><p class="q">Tukarkan 13 kg 320 g dalam kg.</p>
+      <div class="steps"><div>= 13 + (320 ÷ 1000)</div><div>= 13 + 0.32</div><div class="ans">= 13.32 kg</div></div></div>
+
+    <h4>Latihan</h4>
+    <ul class="drill">
+      <li><span class="lbl">a) 3.25 kg dalam g</span><button class="reveal">Tunjuk jawapan</button><div class="answer" hidden>3250 g</div></li>
+      <li><span class="lbl">b) 7830 kg dalam tan</span><button class="reveal">Tunjuk jawapan</button><div class="answer" hidden>7.83 tan</div></li>
+      <li><span class="lbl">c) 74 g 360 mg dalam g</span><button class="reveal">Tunjuk jawapan</button><div class="answer" hidden>74.36 g</div></li>
+      <li><span class="lbl">d) 65 tan 630 kg dalam tan</span><button class="reveal">Tunjuk jawapan</button><div class="answer" hidden>65.63 tan</div></li>
+    </ul>
+    <div class="sentinel" data-sec="3"></div>
+  </section>
+
+  <!-- 4 -->
+  <section class="sec" id="s4">
+    <h2><span class="num">4</span>Masa</h2>
+    <div class="box">
+      <div class="box-h"><h3>Definisi dan faktor penukaran</h3><button class="copy" data-copy="c-masa">Salin</button></div>
+      <div class="box-b" id="c-masa">
+        <p><b>Masa</b> ialah tempoh di antara dua kejadian. Unit: abad, dekad, tahun, bulan, minggu, hari, jam, minit dan saat.</p>
+        <ul class="factors">
+          <li>1 abad = 10 dekad</li>
+          <li>1 dekad = 10 tahun</li>
+          <li>1 tahun = 12 bulan</li>
+          <li>1 bulan = 4 minggu</li>
+          <li>1 minggu = 7 hari</li>
+          <li>1 hari = 24 jam</li>
+          <li>1 jam = 60 minit</li>
+          <li>1 minit = 60 saat</li>
+        </ul>
+      </div>
+    </div>
+    <div class="ladder" aria-label="Tangga penukaran masa bahagian 1">
+      <div class="unit">abad</div><div class="step"><span class="down">× 10</span><span class="arr">⇄</span><span class="up">÷ 10</span></div>
+      <div class="unit">dekad</div><div class="step"><span class="down">× 10</span><span class="arr">⇄</span><span class="up">÷ 10</span></div>
+      <div class="unit">tahun</div><div class="step"><span class="down">× 12</span><span class="arr">⇄</span><span class="up">÷ 12</span></div>
+      <div class="unit">bulan</div><div class="step"><span class="down">× 4</span><span class="arr">⇄</span><span class="up">÷ 4</span></div>
+      <div class="unit">minggu</div>
+    </div>
+    <div class="ladder" aria-label="Tangga penukaran masa bahagian 2">
+      <div class="unit">minggu</div><div class="step"><span class="down">× 7</span><span class="arr">⇄</span><span class="up">÷ 7</span></div>
+      <div class="unit">hari</div><div class="step"><span class="down">× 24</span><span class="arr">⇄</span><span class="up">÷ 24</span></div>
+      <div class="unit">jam</div><div class="step"><span class="down">× 60</span><span class="arr">⇄</span><span class="up">÷ 60</span></div>
+      <div class="unit">minit</div><div class="step"><span class="down">× 60</span><span class="arr">⇄</span><span class="up">÷ 60</span></div>
+      <div class="unit">saat</div>
+    </div>
+    <p class="legend">Ke kanan: <b class="d">darab</b>. Ke kiri: <b class="u">bahagi</b>.</p>
+
+    <div class="ex"><span class="tag">Contoh 1</span><p class="q">Tukarkan 96 jam dalam hari.</p>
+      <div class="steps"><div>= 96 ÷ 24</div><div class="ans">= 4 hari</div></div></div>
+    <div class="ex"><span class="tag">Contoh 2</span><p class="q">Tukarkan 13 minit 45 saat dalam saat.</p>
+      <div class="steps"><div>= (13 × 60) + 45</div><div>= 780 + 45</div><div class="ans">= 825 saat</div></div></div>
+
+    <h4>Latihan</h4>
+    <ul class="drill">
+      <li><span class="lbl">a) 4400 tahun dalam abad</span><button class="reveal">Tunjuk jawapan</button><div class="answer" hidden>44 abad<small>4400 ÷ 10 ÷ 10 = 44</small></div></li>
+      <li><span class="lbl">b) 90 tahun dalam minggu</span><button class="reveal">Tunjuk jawapan</button><div class="answer" hidden>4320 minggu<small>90 × 12 × 4 = 4320</small></div></li>
+      <li><span class="lbl">c) 26 minit 20 saat dalam saat</span><button class="reveal">Tunjuk jawapan</button><div class="answer" hidden>1580 saat<small>(26 × 60) + 20 = 1580</small></div></li>
+      <li><span class="lbl">d) 1 minggu 11 hari dalam minit</span><button class="reveal">Tunjuk jawapan</button><div class="answer" hidden>25920 minit<small>(7 + 11) hari × 24 × 60 = 25920</small></div></li>
+    </ul>
+    <div class="sentinel" data-sec="4"></div>
+  </section>
+
+  <!-- 5 -->
+  <section class="sec" id="s5">
+    <h2><span class="num">5</span>Arus elektrik</h2>
+    <div class="box">
+      <div class="box-h"><h3>Definisi dan faktor penukaran</h3><button class="copy" data-copy="c-arus">Salin</button></div>
+      <div class="box-b" id="c-arus">
+        <p><b>Arus elektrik</b> ialah kadar pergerakan cas elektrik yang melewati satu titik. Unit: ampere (A) dan miliampere (mA).</p>
+        <ul class="factors"><li>1 A = 1000 mA</li></ul>
+      </div>
+    </div>
+    <div class="ladder" aria-label="Tangga penukaran arus">
+      <div class="unit">A</div><div class="step"><span class="down">× 1000</span><span class="arr">⇄</span><span class="up">÷ 1000</span></div>
+      <div class="unit">mA</div>
+    </div>
+    <p class="legend">A ke mA: <b class="d">darab</b>. mA ke A: <b class="u">bahagi</b>.</p>
+
+    <div class="ex"><span class="tag">Contoh 1</span><p class="q">Tukarkan 64600 mA dalam A.</p>
+      <div class="steps"><div>= 64600 ÷ 1000</div><div class="ans">= 64.6 A</div></div></div>
+    <div class="ex"><span class="tag">Contoh 2</span><p class="q">Tukarkan 0.49 A dalam mA.</p>
+      <div class="steps"><div>= 0.49 × 1000</div><div class="ans">= 490 mA</div></div></div>
+
+    <h4>Latihan</h4>
+    <ul class="drill">
+      <li><span class="lbl">a) 5680 mA dalam A</span><button class="reveal">Tunjuk jawapan</button><div class="answer" hidden>5.68 A</div></li>
+      <li><span class="lbl">b) 11.59 A dalam mA</span><button class="reveal">Tunjuk jawapan</button><div class="answer" hidden>11590 mA</div></li>
+      <li><span class="lbl">c) 3 A 430 mA dalam mA</span><button class="reveal">Tunjuk jawapan</button><div class="answer" hidden>3430 mA</div></li>
+      <li><span class="lbl">d) 17 A 220 mA dalam A</span><button class="reveal">Tunjuk jawapan</button><div class="answer" hidden>17.22 A</div></li>
+    </ul>
+    <div class="sentinel" data-sec="5"></div>
+  </section>
+
+  <!-- 6 -->
+  <section class="sec" id="s6">
+    <h2><span class="num">6</span>Penyelesaian masalah</h2>
+    <p>Bahagian ini gabungkan semua penukaran unit (panjang, jisim, masa dan arus elektrik) dalam operasi tambah, darab, bahagi dan soalan berayat. Caranya sama: tukar semua nilai ke satu unit dulu, baru kira.</p>
+
+    <h4>Operasi dengan unit campuran</h4>
+    <div class="ex"><span class="tag">Contoh 1</span><p class="q">Selesaikan 5 km 650 m + 4 km 560 m dalam km.</p>
+      <div class="steps"><div>= [5 + (650 ÷ 1000)] + [4 + (560 ÷ 1000)]</div><div>= 5.65 + 4.56</div><div class="ans">= 10.21 km</div></div></div>
+    <div class="ex"><span class="tag">Contoh 2</span><p class="q">Selesaikan 73 kg 650 g + 5 kg 463 g dalam kg.</p>
+      <div class="steps"><div>= [(73 × 1000) + 650] + [(5 × 1000) + 463]</div><div>= 73650 + 5463</div><div>= 79113 g</div><div>= 79113 ÷ 1000</div><div class="ans">= 79.113 kg</div></div></div>
+    <div class="ex"><span class="tag">Contoh 3</span><p class="q">Selesaikan 5 jam 36 minit × 7 dalam minit.</p>
+      <div class="steps"><div>= (5 × 7 × 60) + (36 × 7)</div><div>= 2100 + 252</div><div class="ans">= 2352 minit</div></div></div>
+    <div class="ex"><span class="tag">Contoh 4</span><p class="q">Selesaikan 27 A 500 mA ÷ 5 dalam A.</p>
+      <div class="steps"><div>= (27 ÷ 5) + (500 ÷ 5 ÷ 1000)</div><div>= 5.4 + 0.1</div><div class="ans">= 5.5 A</div></div></div>
+
+    <h4>Soalan berayat</h4>
+    <div class="ex"><span class="tag">Contoh 5</span><p class="q">Ali hendak membeli 5 gulung pagar dawai. Panjang segulung pagar dawai ialah 32 m 50 cm. Berapakah jumlah panjang dawai yang dibeli dalam mm?</p>
+      <div class="steps"><div>= 32 m 50 cm × 5</div><div>= 160 m 250 cm</div><div>= (160 × 100 × 10) + (250 × 10)</div><div>= 160000 + 2500</div><div class="ans">= 162500 mm</div></div></div>
+    <div class="ex"><span class="tag">Contoh 6</span><p class="q">Sebuah kotak mengandungi 24 tin minuman. Berat setiap tin ialah 325 g. Jika berat kotak kosong ialah 200 g, hitung jumlah berat kotak dan tin minuman dalam kg.</p>
+      <div class="steps"><div>= (24 × 325 g) + 200 g</div><div>= 7800 g + 200 g</div><div>= 8000 g</div><div>= 8000 ÷ 1000</div><div class="ans">= 8 kg</div></div></div>
+    <div class="ex"><span class="tag">Contoh 7</span><p class="q">Pertandingan lumba lari bermula pada 10.50 pagi dan tamat selepas 4 jam 32 minit. Bilakah pertandingan itu tamat?</p>
+      <div class="steps"><div>= 10 jam 50 minit + 4 jam 32 minit</div><div>= 14 jam 82 minit</div><div>= (14 jam + 1 jam) + (82 minit − 60 minit)</div><div>= 15 jam 22 minit</div><div class="ans">= 3.22 petang</div></div></div>
+
+    <h4>Latihan</h4>
+    <ul class="drill">
+      <li><span class="lbl">a) Encik Harun berjalan kaki ke pejabat dan balik setiap hari. Jarak ke pejabat ialah 1 km 597 m. Jika dia bekerja 6 hari seminggu, berapakah jumlah jarak perjalanannya dalam km?</span><button class="reveal">Tunjuk jawapan</button>
+        <div class="answer" hidden>19.164 km<small>1 km 597 m = 1.597 km<br>Pergi balik: 1.597 × 2 = 3.194 km<br>6 hari: 3.194 × 6 = 19.164 km</small></div></li>
+      <li><span class="lbl">b) Jisim epal dan oren masing-masing ialah 2 kg 640 g dan 3 kg 550 g. En. Abu memberi 1 kg 650 g buah-buahan itu kepada jirannya. Hitung jisim buah-buahan yang tinggal dalam g.</span><button class="reveal">Tunjuk jawapan</button>
+        <div class="answer" hidden>4540 g<small>2640 g + 3550 g = 6190 g<br>6190 g − 1650 g = 4540 g</small></div></li>
+      <li><span class="lbl">c) Pada jam 0730, Zaidi menunggang motosikal dari Kajang ke Kluang selama 4 jam 15 minit. Dia berehat 45 minit, kemudian meneruskan perjalanan ke Pasir Gudang selama 2 jam 30 minit. Pukul berapakah Zaidi tiba di Pasir Gudang?</span><button class="reveal">Tunjuk jawapan</button>
+        <div class="answer" hidden>3.00 petang<small>0730 + 4 jam 15 minit = 1145<br>1145 + 45 minit = 1230<br>1230 + 2 jam 30 minit = 1500 = 3.00 petang</small></div></li>
+    </ul>
+    <div class="sentinel" data-sec="6"></div>
+  </section>
+
+  <!-- Kuiz -->
+  <section class="sec" id="kuiz">
+    <h2><span class="num">✓</span>Kuiz ringkas</h2>
+    <p>10 soalan. Pilih satu jawapan. Penjelasan akan keluar selepas anda pilih.</p>
+    <div id="quiz"></div>
+    <div id="score" class="score" hidden></div>
+    <div class="actions">
+      <button class="btn" id="resetQuiz">Ulang kuiz</button>
+      <button class="btn" id="resetAll">Padam semua kemajuan</button>
+    </div>
+  </section>
+</main>
+
+<footer class="wrap">Sumber: Nota Matematik SBM10012 Topik 1, Jabatan Pendidikan Politeknik dan Kolej Komuniti. Kemajuan disimpan dalam pelayar ini sahaja.</footer>
+
+<script>
+(function(){
+  var KEY = 'sbm10012-topik1-v1';
+  var TOTAL = 7;
+  var state = { read: [], quiz: {}, theme: null };
+
+  function load(){
+    try{
+      var raw = localStorage.getItem(KEY);
+      if(raw){
+        var s = JSON.parse(raw);
+        if(s && typeof s === 'object'){
+          state.read = Array.isArray(s.read) ? s.read : [];
+          state.quiz = (s.quiz && typeof s.quiz === 'object') ? s.quiz : {};
+          state.theme = s.theme || null;
+        }
+      }
+    }catch(e){}
+  }
+  function save(){
+    try{ localStorage.setItem(KEY, JSON.stringify(state)); }catch(e){}
+  }
+  load();
+
+  /* ---------- Tema ---------- */
+  var themeBtn = document.getElementById('themeBtn');
+  function systemDark(){
+    try{ return window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches; }catch(e){ return false; }
+  }
+  function applyTheme(t){
+    document.documentElement.setAttribute('data-theme', t);
+    themeBtn.textContent = t === 'dark' ? '☀ Cerah' : '☾ Gelap';
+    themeBtn.setAttribute('aria-label', t === 'dark' ? 'Tukar ke tema cerah' : 'Tukar ke tema gelap');
+  }
+  applyTheme(state.theme || (systemDark() ? 'dark' : 'light'));
+  themeBtn.addEventListener('click', function(){
+    var next = document.documentElement.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';
+    state.theme = next; save(); applyTheme(next);
+  });
+
+  /* ---------- Progress ---------- */
+  var quizData = [
+    { q:'Yang mana satu ialah kuantiti asas?', o:['Luas','Halaju','Panjang','Ketumpatan'], a:2,
+      e:'Panjang ialah kuantiti asas. Luas, halaju dan ketumpatan ialah kuantiti terbitan kerana dihasilkan daripada gabungan kuantiti asas.' },
+    { q:'Apakah unit asas bagi jisim?', o:['gram','kilogram','tan','miligram'], a:1,
+      e:'Unit asas jisim ialah kilogram (kg). Tan, gram dan miligram ialah unit lain bagi jisim.' },
+    { q:'Kuantiti terbitan dihasilkan dengan menggabungkan kuantiti asas melalui operasi:', o:['Tambah dan tolak','Pendaraban atau pembahagian','Kuasa dua sahaja','Purata'], a:1,
+      e:'Mengikut definisi, kuantiti terbitan dihasilkan melalui operasi pendaraban atau pembahagian kuantiti asas. Contoh: luas = panjang × lebar.' },
+    { q:'Apakah nama khas bagi unit daya (kgms⁻²)?', o:['joule','pascal','watt','newton'], a:3,
+      e:'Daya = jisim × pecutan, unitnya kgms⁻², dan nama khasnya newton (N). Joule untuk kerja, pascal untuk tekanan, watt untuk kuasa.' },
+    { q:'Tukarkan 6900 cm kepada km.', o:['69 km','6.9 km','0.69 km','0.069 km'], a:3,
+      e:'cm ke m: 6900 ÷ 100 = 69 m. m ke km: 69 ÷ 1000 = 0.069 km.' },
+    { q:'Tukarkan 74 g 360 mg dalam g.', o:['74.36 g','74.036 g','743.6 g','7436 g'], a:0,
+      e:'360 mg ÷ 1000 = 0.36 g. Jadi 74 + 0.36 = 74.36 g.' },
+    { q:'Tukarkan 90 tahun dalam minggu (guna faktor dalam nota ini).', o:['3600 minggu','4320 minggu','4680 minggu','1080 minggu'], a:1,
+      e:'1 tahun = 12 bulan, 1 bulan = 4 minggu. Jadi 90 × 12 × 4 = 4320 minggu.' },
+    { q:'Tukarkan 3 A 430 mA dalam mA.', o:['343 mA','3.43 mA','3430 mA','34300 mA'], a:2,
+      e:'3 A × 1000 = 3000 mA. Tambah 430 mA: 3000 + 430 = 3430 mA.' },
+    { q:'Sebuah kotak mengandungi 24 tin minuman, setiap satu 325 g. Kotak kosong 200 g. Berapakah jumlah berat dalam kg?', o:['7.8 kg','8 kg','78 kg','8.2 kg'], a:1,
+      e:'24 × 325 = 7800 g. Tambah kotak: 7800 + 200 = 8000 g. 8000 ÷ 1000 = 8 kg.' },
+    { q:'Zaidi bertolak pada jam 0730. Perjalanan 4 jam 15 minit, rehat 45 minit, kemudian 2 jam 30 minit lagi. Pukul berapa dia tiba?', o:['2.30 petang','2.45 petang','3.00 petang','3.15 petang'], a:2,
+      e:'0730 + 4 jam 15 minit = 1145. + 45 minit = 1230. + 2 jam 30 minit = 1500, iaitu 3.00 petang.' }
+  ];
+
+  function quizDone(){
+    for(var i=0;i<quizData.length;i++){ if(state.quiz[i] === undefined) return false; }
+    return true;
+  }
+  function updateProgress(){
+    var secs = 0;
+    for(var s=1;s<=6;s++){ if(state.read.indexOf(s) !== -1) secs++; }
+    var done = secs + (quizDone() ? 1 : 0);
+    var pct = Math.round(done / TOTAL * 100);
+    document.getElementById('progFill').style.width = pct + '%';
+    document.getElementById('progText').textContent = done + ' / ' + TOTAL + ' selesai';
+    document.getElementById('progPct').textContent = pct + '%';
+    document.getElementById('progBar').setAttribute('aria-valuenow', pct);
+    var links = document.querySelectorAll('#nav a');
+    for(var i=0;i<links.length;i++){
+      var n = parseInt(links[i].getAttribute('data-sec'),10);
+      var isDone = n === 7 ? quizDone() : state.read.indexOf(n) !== -1;
+      links[i].classList.toggle('done', isDone);
+    }
+  }
+  function markRead(n){
+    if(state.read.indexOf(n) === -1){ state.read.push(n); save(); updateProgress(); }
+  }
+
+  var sentinels = document.querySelectorAll('.sentinel');
+  if('IntersectionObserver' in window){
+    var io = new IntersectionObserver(function(entries){
+      entries.forEach(function(en){
+        if(en.isIntersecting){ markRead(parseInt(en.target.getAttribute('data-sec'),10)); io.unobserve(en.target); }
+      });
+    }, { threshold: 0 });
+    sentinels.forEach(function(el){ io.observe(el); });
+  } else {
+    window.addEventListener('scroll', function(){
+      sentinels.forEach(function(el){
+        if(el.getBoundingClientRect().top < window.innerHeight){ markRead(parseInt(el.getAttribute('data-sec'),10)); }
+      });
+    }, { passive: true });
+  }
+
+  /* ---------- Butang salin ---------- */
+  function fallbackCopy(text){
+    var ta = document.createElement('textarea');
+    ta.value = text; ta.setAttribute('readonly','');
+    ta.style.position = 'fixed'; ta.style.opacity = '0';
+    document.body.appendChild(ta); ta.select();
+    var ok = false;
+    try{ ok = document.execCommand('copy'); }catch(e){}
+    document.body.removeChild(ta);
+    return ok;
+  }
+  function flash(btn, msg){
+    var old = 'Salin';
+    btn.textContent = msg; btn.classList.add('ok');
+    setTimeout(function(){ btn.textContent = old; btn.classList.remove('ok'); }, 1600);
+  }
+  document.querySelectorAll('.copy').forEach(function(btn){
+    btn.addEventListener('click', function(){
+      var el = document.getElementById(btn.getAttribute('data-copy'));
+      if(!el) return;
+      var text = el.innerText.trim();
+      if(navigator.clipboard && window.isSecureContext){
+        navigator.clipboard.writeText(text).then(function(){ flash(btn,'Disalin'); },
+          function(){ flash(btn, fallbackCopy(text) ? 'Disalin' : 'Gagal'); });
+      } else {
+        flash(btn, fallbackCopy(text) ? 'Disalin' : 'Gagal');
+      }
+    });
+  });
+
+  /* ---------- Tunjuk jawapan latihan ---------- */
+  document.querySelectorAll('.reveal').forEach(function(btn){
+    btn.setAttribute('aria-expanded','false');
+    btn.addEventListener('click', function(){
+      var ans = btn.parentNode.querySelector('.answer');
+      var open = ans.hasAttribute('hidden');
+      if(open){ ans.removeAttribute('hidden'); } else { ans.setAttribute('hidden',''); }
+      btn.textContent = open ? 'Sorok jawapan' : 'Tunjuk jawapan';
+      btn.setAttribute('aria-expanded', open ? 'true' : 'false');
+    });
+  });
+
+  /* ---------- Kuiz ---------- */
+  var quizEl = document.getElementById('quiz');
+  var letters = ['A','B','C','D'];
+
+  function renderQuiz(){
+    quizEl.innerHTML = '';
+    quizData.forEach(function(item, qi){
+      var card = document.createElement('div');
+      card.className = 'qcard';
+      var qn = document.createElement('p'); qn.className = 'qn'; qn.textContent = 'Soalan ' + (qi+1) + ' / ' + quizData.length;
+      var qt = document.createElement('p'); qt.className = 'qt'; qt.textContent = item.q;
+      var opts = document.createElement('div'); opts.className = 'opts';
+      var chosen = state.quiz[qi];
+      item.o.forEach(function(opt, oi){
+        var b = document.createElement('button');
+        b.className = 'opt';
+        b.textContent = letters[oi] + '.  ' + opt;
+        if(chosen !== undefined){
+          b.disabled = true;
+          if(oi === item.a) b.classList.add('right');
+          else if(oi === chosen) b.classList.add('wrong');
+        }
+        b.addEventListener('click', function(){
+          if(state.quiz[qi] !== undefined) return;
+          state.quiz[qi] = oi; save(); renderQuiz(); updateProgress();
+        });
+        opts.appendChild(b);
+      });
+      card.appendChild(qn); card.appendChild(qt); card.appendChild(opts);
+      if(chosen !== undefined){
+        var fb = document.createElement('div'); fb.className = 'fb';
+        var tag = document.createElement('b');
+        if(chosen === item.a){ tag.className = 'r'; tag.textContent = 'Betul. '; }
+        else { tag.className = 'w'; tag.textContent = 'Kurang tepat. Jawapan: ' + letters[item.a] + '. '; }
+        fb.appendChild(tag);
+        fb.appendChild(document.createTextNode(item.e));
+        card.appendChild(fb);
+      }
+      quizEl.appendChild(card);
+    });
+    renderScore();
+  }
+  function renderScore(){
+    var box = document.getElementById('score');
+    if(!quizDone()){ box.setAttribute('hidden',''); return; }
+    var right = 0;
+    quizData.forEach(function(item, qi){ if(state.quiz[qi] === item.a) right++; });
+    box.textContent = 'Markah anda: ' + right + ' / ' + quizData.length +
+      (right === quizData.length ? '. Semua betul.' : '. Semak semula soalan yang salah, kemudian cuba lagi.');
+    box.removeAttribute('hidden');
+  }
+
+  document.getElementById('resetQuiz').addEventListener('click', function(){
+    state.quiz = {}; save(); renderQuiz(); updateProgress();
+    document.getElementById('kuiz').scrollIntoView();
+  });
+  document.getElementById('resetAll').addEventListener('click', function(){
+    if(!window.confirm('Padam semua kemajuan dan jawapan kuiz?')) return;
+    state.read = []; state.quiz = {}; save();
+    renderQuiz(); updateProgress();
+    window.scrollTo(0,0);
+    setTimeout(function(){ location.reload(); }, 50);
+  });
+
+  renderQuiz();
+  updateProgress();
+})();
+</script>
+</body>
+</html>
