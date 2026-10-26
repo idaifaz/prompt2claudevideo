@@ -1,0 +1,337 @@
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>Sinopsis Program Video</title>
+<style>
+  @font-face { font-family: D; font-weight: 900; src: url(assets/fonts/InterDisplay-Black.otf); }
+  @font-face { font-family: D; font-weight: 800; src: url(assets/fonts/InterDisplay-ExtraBold.otf); }
+  @font-face { font-family: T; font-weight: 600; src: url(assets/fonts/Inter-SemiBold.otf); }
+  @font-face { font-family: T; font-weight: 500; src: url(assets/fonts/Inter-Medium.otf); }
+  html, body { margin: 0; background: #000; }
+  canvas { display: block; }
+</style>
+</head>
+<body>
+<canvas id="c" width="1080" height="1920"></canvas>
+<script>
+// Video 9:16, 20 s, 30 fps. Babak bertukar pada beat muzik (120 BPM): 0, 4, 6, 8.5, 11, 13.5, 16.
+const W = 1080, H = 1920, FPS = 30, DUR = 20, SUB = 6, SHUTTER = 0.55;
+const NAVY = '#0f2167', NAVY2 = '#1a3796', BLUE = '#2353c4', LIME = '#d7f21c', INK = '#1d2a4d', BG = '#eef3fa';
+
+const main = document.getElementById('c');
+const mctx = main.getContext('2d');
+const off = document.createElement('canvas'); off.width = W; off.height = H;
+const ctx = off.getContext('2d');
+
+// ---------- util ----------
+const clamp = (x, a = 0, b = 1) => Math.min(b, Math.max(a, x));
+const lerp = (a, b, t) => a + (b - a) * t;
+const prog = (t, a, d) => clamp((t - a) / d);
+const eOutExpo = t => t >= 1 ? 1 : 1 - Math.pow(2, -10 * t);
+const eOutCubic = t => 1 - Math.pow(1 - t, 3);
+const eInCubic = t => t * t * t;
+const eInOut = t => t < .5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2;
+const eOutBack = t => { const c = 1.9; return 1 + (c + 1) * Math.pow(t - 1, 3) + c * Math.pow(t - 1, 2); };
+
+const IMG = {};
+function load(name, src) {
+  return new Promise(r => { const i = new Image(); i.onload = () => { IMG[name] = i; r(); }; i.src = src; });
+}
+// tepi bangunan dilembutkan supaya sebati dengan latar
+function feather(img, inner = 0.55) {
+  const c = document.createElement('canvas'); c.width = img.width; c.height = img.height;
+  const g = c.getContext('2d'); g.drawImage(img, 0, 0);
+  g.globalCompositeOperation = 'destination-in';
+  const r = Math.max(img.width, img.height) / 2;
+  const grd = g.createRadialGradient(img.width / 2, img.height / 2, r * inner, img.width / 2, img.height / 2, r * 1.0);
+  grd.addColorStop(0, 'rgba(0,0,0,1)'); grd.addColorStop(1, 'rgba(0,0,0,0)');
+  g.fillStyle = grd; g.fillRect(0, 0, img.width, img.height);
+  return c;
+}
+
+function rrect(x, y, w, h, r) {
+  ctx.beginPath(); ctx.moveTo(x + r, y); ctx.arcTo(x + w, y, x + w, y + h, r); ctx.arcTo(x + w, y + h, x, y + h, r);
+  ctx.arcTo(x, y + h, x, y, r); ctx.arcTo(x, y, x + w, y, r); ctx.closePath();
+}
+function para(x, y, w, h, sk) { // parallelogram condong macam banner poster
+  ctx.beginPath(); ctx.moveTo(x + sk, y); ctx.lineTo(x + w + sk, y); ctx.lineTo(x + w - sk, y + h); ctx.lineTo(x - sk, y + h); ctx.closePath();
+}
+
+function wrap(str, font, maxW) {
+  ctx.font = font; const words = str.split(' '); const lines = []; let cur = '';
+  for (const w of words) { const n = cur ? cur + ' ' + w : w; if (ctx.measureText(n).width > maxW && cur) { lines.push(cur); cur = w; } else cur = n; }
+  if (cur) lines.push(cur); return lines;
+}
+
+// Teks huruf demi huruf: setiap huruf naik, membesar dan muncul ikut giliran.
+function typeLines(lines, o) {
+  const { font, color, t, start, per = 0.03, align = 'center', x = W / 2, y, lh, track = 0, dur = 0.28, rise = 36 } = o;
+  ctx.font = font; ctx.textBaseline = 'alphabetic'; ctx.textAlign = 'left';
+  let idx = 0;
+  lines.forEach((line, li) => {
+    const chars = [...line]; const ws = chars.map(c => ctx.measureText(c).width + track);
+    const total = ws.reduce((a, b) => a + b, 0) - track;
+    let cx = align === 'center' ? x - total / 2 : align === 'right' ? x - total : x;
+    const cy = y + li * lh;
+    chars.forEach((ch, i) => {
+      const p = prog(t, start + idx * per, dur); idx++;
+      if (p > 0 && ch !== ' ') {
+        const e = eOutBack(p);
+        ctx.save(); ctx.globalAlpha *= clamp(p * 1.6);
+        ctx.translate(cx + ws[i] / 2, cy + (1 - eOutCubic(p)) * rise);
+        ctx.scale(lerp(0.4, 1, e), lerp(0.4, 1, e));
+        ctx.fillStyle = color; ctx.fillText(ch, -(ws[i] - track) / 2, 0); ctx.restore();
+      }
+      cx += ws[i];
+    });
+  });
+  return idx;
+}
+
+// ---------- latar ----------
+function background(t, dark) {
+  const g = ctx.createLinearGradient(0, 0, 0, H);
+  if (dark) { g.addColorStop(0, '#0b1a55'); g.addColorStop(1, '#1b3a9e'); }
+  else { g.addColorStop(0, '#ffffff'); g.addColorStop(1, BG); }
+  ctx.fillStyle = g; ctx.fillRect(0, 0, W, H);
+  // grid blueprint bergerak perlahan
+  const off = (t * 18) % 60;
+  ctx.lineWidth = 1; ctx.strokeStyle = dark ? 'rgba(255,255,255,0.07)' : 'rgba(35,83,196,0.08)';
+  ctx.beginPath();
+  for (let x = -60 + off; x < W + 60; x += 60) { ctx.moveTo(x, 0); ctx.lineTo(x, H); }
+  for (let y = -60 + off; y < H + 60; y += 60) { ctx.moveTo(0, y); ctx.lineTo(W, y); }
+  ctx.stroke();
+  ctx.strokeStyle = dark ? 'rgba(255,255,255,0.12)' : 'rgba(35,83,196,0.13)'; ctx.lineWidth = 2;
+  ctx.beginPath(); ctx.arc(W / 2, H * 0.55, 420 + Math.sin(t) * 10, 0, Math.PI * 2); ctx.stroke();
+  ctx.beginPath(); ctx.arc(W / 2, H * 0.55, 560, t * 0.3, t * 0.3 + 4); ctx.stroke();
+  // jalur sudut navy + lime (gaya poster)
+  const s = eOutExpo(prog(t, 0, 0.8));
+  ctx.save(); ctx.globalAlpha = 0.95;
+  ctx.fillStyle = NAVY; para(-200 + lerp(-300, 0, s), 40, 300, 34, 30); ctx.fill();
+  ctx.fillStyle = LIME; para(-200 + lerp(-400, 0, s), 90, 240, 22, 22); ctx.fill();
+  ctx.fillStyle = NAVY; para(W - 120 + lerp(300, 0, s), H - 300, 320, 34, 30); ctx.fill();
+  ctx.fillStyle = LIME; para(W - 60 + lerp(400, 0, s), H - 250, 260, 22, 22); ctx.fill();
+  ctx.restore();
+}
+
+function header(t, y = 54, w = 640, a0 = 0) {
+  const p = eOutExpo(prog(t, a0, 0.7)); if (p <= 0) return;
+  const img = IMG.header, h = w * img.height / img.width;
+  ctx.save(); ctx.globalAlpha *= p;
+  ctx.translate(0, lerp(-160, 0, p));
+  ctx.shadowColor = 'rgba(15,33,103,0.18)'; ctx.shadowBlur = 24; ctx.shadowOffsetY = 6;
+  ctx.fillStyle = '#fff'; rrect(W / 2 - w / 2 - 24, y - 14, w + 48, h + 28, 22); ctx.fill();
+  ctx.shadowColor = 'transparent';
+  ctx.drawImage(img, W / 2 - w / 2, y, w, h);
+  ctx.restore();
+}
+
+function footer(t, a0 = 0) {
+  const p = eOutExpo(prog(t, a0, 0.6)); if (p <= 0) return;
+  const img = IMG.footer, h = W * img.height / img.width;
+  ctx.save(); ctx.translate(0, lerp(h + 40, 0, p));
+  ctx.fillStyle = NAVY; ctx.fillRect(0, H - h - 18, W, h + 18);
+  ctx.fillStyle = LIME; ctx.fillRect(0, H - h - 24, W * p, 6);
+  ctx.drawImage(img, 0, H - h - 8, W, h);
+  ctx.restore();
+}
+
+// ---------- babak ----------
+function sceneOpen(t) {
+  header(t, 70, 760, 0.05);
+  // banner navy: SINOPSIS / PROGRAM
+  const b1 = eOutExpo(prog(t, 0.45, 0.6));
+  ctx.save();
+  ctx.fillStyle = LIME; para(-80, 330, (W + 160) * b1, 330, 46); ctx.fill();
+  ctx.fillStyle = NAVY; para(-80, 310, (W + 140) * eOutExpo(prog(t, 0.5, 0.6)), 330, 46); ctx.fill();
+  ctx.restore();
+  typeLines(['SINOPSIS'], { font: '900 158px D', color: '#fff', t, start: 0.75, per: 0.045, y: 460, lh: 0, track: 2 });
+  typeLines(['PROGRAM'], { font: '900 158px D', color: LIME, t, start: 1.1, per: 0.045, y: 610, lh: 0, track: 2 });
+  // banner putih: SIJIL TEKNOLOGI SENIBINA
+  const b2 = eOutExpo(prog(t, 1.3, 0.6));
+  ctx.save();
+  ctx.shadowColor = 'rgba(15,33,103,0.25)'; ctx.shadowBlur = 30; ctx.shadowOffsetY = 10;
+  ctx.fillStyle = '#fff'; para(W + 80 - (W + 160) * b2, 690, W + 160, 300, 40); ctx.fill();
+  ctx.restore();
+  typeLines(['SIJIL TEKNOLOGI'], { font: '900 108px D', color: NAVY, t, start: 1.45, per: 0.03, y: 815, lh: 0 });
+  typeLines(['SENIBINA'], { font: '900 146px D', color: NAVY, t, start: 1.85, per: 0.04, y: 950, lh: 0, track: 4 });
+  // pil KOLEJ KOMUNITI KUANTAN
+  const b3 = eOutBack(prog(t, 2.25, 0.5));
+  if (b3 > 0) {
+    ctx.save(); ctx.translate(W / 2, 1060); ctx.scale(b3, 1);
+    ctx.fillStyle = NAVY2; para(-470, -46, 940, 92, 22); ctx.fill(); ctx.restore();
+    typeLines(['KOLEJ KOMUNITI KUANTAN'], { font: '800 44px D', color: '#fff', t, start: 2.35, per: 0.025, y: 1076, lh: 0, track: 8, rise: 20 });
+  }
+  // bangunan naik dari bawah
+  const p = eOutExpo(prog(t, 1.6, 1.0));
+  if (p > 0) {
+    const img = IMG.buildingF, w = 1000 * lerp(0.8, 1, p) * (1 + t * 0.015), h = w * img.height / img.width;
+    ctx.save(); ctx.globalAlpha *= clamp(p * 1.5);
+    ctx.drawImage(img, W / 2 - w / 2, 1150 + lerp(300, 0, p) - (w - 1000) * 0.2, w, h); ctx.restore();
+  }
+}
+
+const INTRO = ['Kursus ini mendedahkan dan', 'melengkapkan pelajar dengan', 'pengetahuan dan kemahiran:'];
+function sceneIntro(t) {
+  header(t, 54, 600, 0);
+  const n = typeLines(INTRO, { font: '600 60px T', color: INK, t, start: 0.15, per: 0.012, y: 330, lh: 84, rise: 24 });
+  const lp = eOutExpo(prog(t, 0.1, 0.6));
+  ctx.fillStyle = LIME; ctx.fillRect(40, 306, 60 * lp, 8); ctx.fillRect(W - 40 - 60 * lp, 306, 60 * lp, 8);
+  // bangunan + 4 penunjuk (angka count-up)
+  const img = IMG.buildingF, w = 900 * (1 + t * 0.03), h = w * img.height / img.width;
+  const cx = W / 2, cy = 1150;
+  const p = eOutExpo(prog(t, 0.0, 0.8));
+  ctx.save(); ctx.globalAlpha *= p; ctx.drawImage(img, cx - w / 2, cy - h / 2 + lerp(80, 0, p), w, h); ctx.restore();
+  const pts = [[-1, -1], [1, -1], [-1, 1], [1, 1]];
+  pts.forEach(([sx, sy], i) => {
+    const a = 0.45 + i * 0.18, q = eOutExpo(prog(t, a, 0.5)); if (q <= 0) return;
+    const x0 = cx + sx * 170, y0 = cy + sy * 150, x1 = cx + sx * 330, y1 = cy + sy * 340;
+    ctx.strokeStyle = NAVY2; ctx.lineWidth = 6; ctx.beginPath(); ctx.moveTo(x0, y0);
+    ctx.lineTo(lerp(x0, x1, q), lerp(y0, y1, q)); ctx.stroke();
+    ctx.fillStyle = '#fff'; ctx.beginPath(); ctx.arc(x0, y0, 14, 0, 7); ctx.fill(); ctx.stroke();
+    const s = eOutBack(prog(t, a + 0.15, 0.4)); if (s <= 0) return;
+    ctx.save(); ctx.translate(x1, y1); ctx.scale(s, s);
+    ctx.fillStyle = LIME; rrect(-62, -52, 136, 116, 20); ctx.fill();
+    ctx.fillStyle = NAVY; rrect(-70, -62, 136, 116, 20); ctx.fill();
+    const v = Math.round(lerp(0, i + 1, eOutCubic(prog(t, a + 0.15, 0.45))));
+    ctx.fillStyle = '#fff'; ctx.font = '900 76px D'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+    ctx.fillText(String(v).padStart(2, '0'), -2, 0); ctx.restore();
+  });
+  ctx.textBaseline = 'alphabetic';
+  footer(t, 0.1);
+}
+
+const CARDS = [
+  { n: 1, title: ['LUKISAN KERJA', 'SENIBINA'], img: 'plan', desc: 'Menghasilkan lukisan kerja senibina yang menepati kehendak Undang-Undang Kecil Bangunan Seragam dan Pihak Berkuasa Tempatan.' },
+  { n: 2, title: ['LUKISAN', 'PERSEMBAHAN'], img: 'sketch', desc: 'Menghasilkan lukisan persembahan senibina.' },
+  { n: 3, title: ['MODEL', 'BANGUNAN'], img: 'model', desc: 'Menghasilkan model bangunan bagi tujuan persembahan.' },
+  { n: 4, title: ['MODEL 3D', 'BANGUNAN (BIM)'], img: 'laptop', desc: 'Menghasilkan model 3D bangunan menggunakan teknologi BIM.' },
+];
+function sceneCard(t, c) {
+  header(t, 54, 600, -1);
+  const dir = c.n % 2 ? -1 : 1;
+  const p = eOutExpo(prog(t, 0.0, 0.7));
+  const X = 70, Y = 230, CW = 940, CH = 1500;
+  ctx.save(); ctx.translate(dir * (1 - p) * 1250, 0); ctx.rotate(dir * (1 - p) * -0.06);
+  // blok lime di belakang kad
+  ctx.fillStyle = LIME; rrect(X + (dir < 0 ? -26 : 26), Y + 30, CW, CH, 34); ctx.fill();
+  ctx.shadowColor = 'rgba(15,33,103,0.25)'; ctx.shadowBlur = 40; ctx.shadowOffsetY = 14;
+  ctx.fillStyle = '#fff'; rrect(X, Y, CW, CH, 34); ctx.fill(); ctx.shadowColor = 'transparent';
+  // lencana nombor dengan count-up
+  const bp = eOutBack(prog(t, 0.2, 0.5));
+  ctx.save(); ctx.translate(X + 150, Y + 140); ctx.scale(bp, bp);
+  ctx.fillStyle = NAVY; rrect(-110, -100, 220, 200, 26); ctx.fill();
+  const v = Math.round(lerp(0, c.n, eOutCubic(prog(t, 0.25, 0.5))));
+  ctx.fillStyle = '#fff'; ctx.font = '900 130px D'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+  ctx.fillText(String(v).padStart(2, '0'), 0, 6); ctx.restore(); ctx.textBaseline = 'alphabetic';
+  // banner tajuk
+  const tp = eOutExpo(prog(t, 0.3, 0.5));
+  ctx.fillStyle = NAVY2; para(X + 280, Y + 50, 680 * tp, 180, 22); ctx.fill();
+  ctx.fillStyle = LIME; ctx.fillRect(X + 280, Y + 240, 260 * tp, 10);
+  typeLines(c.title, { font: '900 64px D', color: '#fff', t, start: 0.45, per: 0.028, align: 'left', x: X + 320, y: Y + 128, lh: 74, rise: 26 });
+  // ilustrasi: wipe reveal + Ken Burns
+  const ip = eInOut(prog(t, 0.35, 0.6));
+  const ix = X + 40, iy = Y + 300, iw = CW - 80, ih = 740;
+  ctx.save(); rrect(ix, iy, iw * ip, ih, 24); ctx.clip();
+  const img = IMG[c.img], sc = Math.max(iw / img.width, ih / img.height) * lerp(1.22, 1.0, eOutCubic(prog(t, 0.35, 2.2)));
+  ctx.drawImage(img, ix + iw / 2 - img.width * sc / 2, iy + ih / 2 - img.height * sc / 2, img.width * sc, img.height * sc);
+  ctx.restore();
+  ctx.strokeStyle = NAVY2; ctx.lineWidth = 4; rrect(ix, iy, iw * ip, ih, 24); if (ip > 0) ctx.stroke();
+  // deskripsi huruf demi huruf
+  const lines = wrap(c.desc, '600 54px T', CW - 120);
+  const per = Math.min(0.022, 1.0 / c.desc.length);
+  ctx.fillStyle = LIME; ctx.fillRect(X + 60, Y + 1075, 120 * eOutExpo(prog(t, 0.6, 0.5)), 10);
+  typeLines(lines, { font: '600 54px T', color: INK, t, start: 0.75, per, align: 'left', x: X + 60, y: Y + 1160, lh: 74, rise: 20 });
+  ctx.restore();
+  footer(t, -1);
+}
+
+function sceneOutro(t) {
+  typeLines(['SIJIL TEKNOLOGI'], { font: '900 92px D', color: '#fff', t, start: 0.5, per: 0.025, y: 230, lh: 0 });
+  typeLines(['SENIBINA'], { font: '900 92px D', color: LIME, t, start: 0.85, per: 0.035, y: 335, lh: 0, track: 4 });
+  // poster penuh: kamera tarik ke belakang dari tajuk
+  const p = eInOut(prog(t, 0.0, 1.1));
+  const S = 960, x = W / 2 - S / 2, y = 430;
+  const z = lerp(2.6, 1, p), fx = W / 2, fy = lerp(y + S * 0.27, y + S / 2, p);
+  ctx.save();
+  ctx.translate(fx, fy); ctx.scale(z, z); ctx.translate(-W / 2, -(y + S / 2));
+  ctx.shadowColor = 'rgba(0,0,0,0.45)'; ctx.shadowBlur = 50; ctx.shadowOffsetY = 20;
+  ctx.fillStyle = '#fff'; rrect(x - 12, y - 12, S + 24, S + 24, 26); ctx.fill(); ctx.shadowColor = 'transparent';
+  ctx.save(); rrect(x, y, S, S, 16); ctx.clip();
+  ctx.drawImage(IMG.poster, x, y, S, S);
+  // kilauan cahaya merentas poster
+  const sh = prog(t, 1.3, 0.9);
+  if (sh > 0 && sh < 1) {
+    const sx = lerp(x - 400, x + S + 400, eInOut(sh));
+    const g = ctx.createLinearGradient(sx - 150, 0, sx + 150, 0);
+    g.addColorStop(0, 'rgba(255,255,255,0)'); g.addColorStop(0.5, 'rgba(255,255,255,0.45)'); g.addColorStop(1, 'rgba(255,255,255,0)');
+    ctx.fillStyle = g; ctx.fillRect(x, y, S, S);
+  }
+  ctx.restore(); ctx.restore();
+  const b = eOutBack(prog(t, 1.0, 0.5));
+  if (b > 0) {
+    ctx.save(); ctx.translate(W / 2, 1530); ctx.scale(b, 1);
+    ctx.fillStyle = LIME; para(-470, -48, 940, 96, 22); ctx.fill(); ctx.restore();
+    typeLines(['KOLEJ KOMUNITI KUANTAN'], { font: '800 46px D', color: NAVY, t, start: 1.1, per: 0.025, y: 1547, lh: 0, track: 8, rise: 20 });
+  }
+  footer(t, 0.4);
+}
+
+const SCENES = [
+  [0, 4, sceneOpen, false, 1.0],
+  [4, 6, sceneIntro, false, 1.15],
+  [6, 8.5, t => sceneCard(t, CARDS[0]), false, 1.06],
+  [8.5, 11, t => sceneCard(t, CARDS[1]), false, 1.06],
+  [11, 13.5, t => sceneCard(t, CARDS[2]), false, 1.06],
+  [13.5, 16, t => sceneCard(t, CARDS[3]), false, 1.06],
+  [16, 20, sceneOutro, true, 1.0],
+];
+
+// Kamera: tolakan zoom perlahan sepanjang babak, zoom-in pantas semasa keluar, zoom-settle semasa masuk.
+function renderAt(T) {
+  const sc = SCENES.find(s => T >= s[0] && T < s[1]) || SCENES[SCENES.length - 1];
+  const [a, b, fn, dark, zin] = sc; const t = T - a, d = b - a;
+  background(T, dark);
+  let z = 1 + t * 0.012, alpha = 1;
+  const pin = eOutCubic(prog(t, 0, 0.4)); z *= lerp(zin, 1, pin); alpha *= clamp(pin * 2.2);
+  if (b < DUR) { const po = eInCubic(prog(t, d - 0.28, 0.28)); z *= lerp(1, 1.35, po); alpha *= 1 - po; }
+  ctx.save(); ctx.globalAlpha = alpha;
+  ctx.translate(W / 2, H / 2); ctx.scale(z, z); ctx.translate(-W / 2, -H / 2);
+  fn(t);
+  ctx.restore();
+  // kilat putih pada setiap potongan beat
+  const flash = Math.max(...SCENES.slice(1).map(s => 1 - clamp(Math.abs(T - s[0]) / 0.12)));
+  if (flash > 0) { ctx.fillStyle = `rgba(255,255,255,${flash * 0.55})`; ctx.fillRect(0, 0, W, H); }
+}
+
+// Motion blur: purata beberapa sub-frame dalam tempoh shutter.
+window.renderFrame = function (f) {
+  const T0 = f / FPS;
+  mctx.globalAlpha = 1; mctx.clearRect(0, 0, W, H);
+  for (let k = 0; k < SUB; k++) {
+    const T = Math.min(DUR - 1e-4, T0 + (k / SUB) * SHUTTER / FPS);
+    ctx.setTransform(1, 0, 0, 1, 0, 0); ctx.globalAlpha = 1;
+    renderAt(T);
+    mctx.globalAlpha = 1 / (k + 1); mctx.drawImage(off, 0, 0);
+  }
+};
+
+window.ready = (async () => {
+  await Promise.all([
+    load('header', 'assets/header.png'), load('footer', 'assets/footer.png'), load('building', 'assets/building.png'),
+    load('plan', 'assets/plan.png'), load('sketch', 'assets/sketch.png'), load('model', 'assets/model.png'),
+    load('laptop', 'assets/laptop.png'), load('poster', 'assets/poster.jpg'),
+  ]);
+  await Promise.all(['900 40px D', '800 40px D', '600 40px T', '500 40px T'].map(f => document.fonts.load(f)));
+  IMG.buildingF = feather(IMG.building, 0.5);
+  return true;
+})();
+
+// Pratonton dalam browser: buka index.html terus.
+if (!/render=1/.test(location.search)) {
+  window.ready.then(() => { const s = performance.now(); (function loop() { renderFrame(Math.floor(((performance.now() - s) / 1000 % DUR) * FPS)); requestAnimationFrame(loop); })(); });
+}
+</script>
+</body>
+</html>
